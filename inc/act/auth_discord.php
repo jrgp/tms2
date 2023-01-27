@@ -43,27 +43,45 @@ if (!isset($_GET['code'])) {
         $user = $provider->getResourceOwner($token);
 
         $username = sprintf('%s#%s', $user->getUsername(), $user->getDiscriminator());
+        $discord_id = (string)$user->getId();
 
         // At this point, we are auth'd. Create an account if one does not exist, otherwise
         // log the user in
 
-        $query = $sql->query("select `id` from `members` where `provider` = 'discord' and `username` = '{$sql->prot($username)}' limit 1");
-
+        $query = $sql->query("select `id` from `members` where `provider` = 'discord' and `provider_id` = '{$sql->prot($discord_id)}' limit 1");
         if ($sql->num($query) == 1) {
-          // We have an account. Initialize login session and go home
-          $row = $sql->fetch_assoc($query);
-          $uid = $row['id'];
+            // We have an account. Initialize login session and go home
+            $row = $sql->fetch_assoc($query);
+            $uid = $row['id'];
+
+            // Update display name in DB for this ID
+            $sql->query("update members set `username` = '{$sql->prot($username)}' where id = '{$sql->prot($uid)}' limit 1");
+
         } else {
-          // No account. Create one.
-          $sql->query("
-            insert into `members` set
-              `username` = '{$sql->prot($username)}',
-              `email` = '',
-              `pending` = '0',
-              `provider` = 'discord',
-              `regdate` = UNIX_TIMESTAMP()
-            ");
-          $uid = $sql->lastid();
+
+            $query = $sql->query("select `id` from `members` where `provider` = 'discord' and `username` = '{$sql->prot($username)}' limit 1");
+
+            if ($sql->num($query) == 1) {
+              // We have an account. Initialize login session and go home
+              $row = $sql->fetch_assoc($query);
+              $uid = $row['id'];
+
+              // Update provider ID in DB for this ID
+              $sql->query("update members set `provider_id` = '{$sql->prot($discord_id)}' where id = '{$sql->prot($uid)}' limit 1");
+
+            } else {
+              // No account. Create one.
+              $sql->query("
+                insert into `members` set
+                  `username` = '{$sql->prot($username)}',
+                  `email` = '',
+                  `pending` = '0',
+                  `provider` = 'discord',
+                  `provider_id` = '{$sql->prot($discord_id)}',
+                  `regdate` = UNIX_TIMESTAMP()
+                ");
+              $uid = $sql->lastid();
+            }
         }
 
         // Create login session with our new UID

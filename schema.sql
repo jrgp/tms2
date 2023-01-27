@@ -230,6 +230,7 @@ CREATE TABLE `members` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(150) NOT NULL,
   `provider` varchar(32) NOT NULL DEFAULT '',
+  `provider_id` varchar(50) DEFAULT NULL,
   `regdate` int(11) unsigned NOT NULL,
   `pending` varchar(32) NOT NULL DEFAULT '1',
   `email` varchar(200) NOT NULL DEFAULT '',
