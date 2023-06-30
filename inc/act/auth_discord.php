@@ -42,7 +42,13 @@ if (!isset($_GET['code'])) {
 
         $user = $provider->getResourceOwner($token);
 
-        $username = sprintf('%s#%s', $user->getUsername(), $user->getDiscriminator());
+        if ($user->getDiscriminator() == 0) {
+            // For people who migrated to discriminator-less names, avoid the trailing #0
+            $username = $user->getUsername();
+        } else {
+            $username = sprintf('%s#%s', $user->getUsername(), $user->getDiscriminator());
+        }
+
         $discord_id = (string)$user->getId();
 
         // At this point, we are auth'd. Create an account if one does not exist, otherwise
